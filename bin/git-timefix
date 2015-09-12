@@ -1,4 +1,8 @@
-#!/bin/bash -e
+#!/bin/sh
+
+set -e
+
+# original are: https://gist.github.com/jeffery/1115504
 ####
 # Helper script to update the Last modified timestamp of files in a Git SCM
 # Projects working Copy
@@ -15,68 +19,136 @@
 # Author: Jeffery Fernandez <jeffery@fernandez.net.au>
 ####
 
-# Make sure we are not running this on a bare Repository
-REPO_TYPE=`git config --list|egrep ^core.bare | awk -F '=' '{ print $2 }'`
-if [ "$REPO_TYPE" == "true" ]
-then
-	echo "Cannot run this script on a bare Repository" && exit 1
-fi
-
-echo "Updating Git Repository Last Modified Time-stamp"
-
-# Obtain the Operating System
-OS=${OS:-`uname`}
+####
+# Author: TsT worldmaster.fr <tst2005@gmail.com>
+#
+# Improvement :
+# - dry-run by default (use -f to apply time change)
+# - pass files to check as argument
+# - do not time sync modified files
+# - do not time sync untracked files
+# - ...
+#
+# TODO:
+# - Linux version improved, to the same for MacOS X and FreeBSD
+# - ...
+####
 
 # Get the last revision hash of a particular file in the git repository
-getFileLastRevision() 
-{
-	git rev-list HEAD "$1" | head -n 1
+getFileLastRevision() {
+	git rev-list HEAD -- "$1" | head -n 1
 }
 
 # Extract the actual last modified timestamp of the file and Update the time-stamp
-updateFileTimeStamp() 
-{
+# ... for Linux
+updateFileTimeStamp() {
 	# Extract the file revision
-	FILE_REVISION_HASH=`getFileLastRevision "$1"`
+	local FILE_REVISION_HASH="$(getFileLastRevision "$1")"
 
+	local tracked="$(git ls-files -t -c -- "$1")"
+	if [ -z "$tracked" ]; then
+		echo "?  $1"
+		return
+	fi
+
+	# Extract the last modified timestamp
 	# Get the File last modified time
-	FILE_MODIFIED_TIME=`git show --pretty=format:%ai --abbrev-commit ${FILE_REVISION_HASH} | head -n 1`
-	
-	# Extract the last modified timestamp, differently for Linux, FreeBSD and Mac OS X
-	if [ "$OS" = 'Linux' ]
-	then
-		# for displaying the date in readable format
-		#FORMATTED_TIMESTAMP=`date --date="${FILE_MODIFIED_TIME}" +'%d-%m-%Y %H:%M:%S %z'`
-		#echo "Modified: ${FILE_MODIFIED_TIME} | ${FORMATTED_TIMESTAMP} > ${1}"
-		
-		# Modify the last modified timestamp
-		touch -d "${FILE_MODIFIED_TIME}" $2
-	
-	elif [ "$OS" = 'Darwin' ] || [ "$OS" = 'FreeBSD' ]
-	then
-		# Format the date for updating the timestamp
-		FORMATTED_TIMESTAMP=`date -j -f '%Y-%m-%d %H:%M:%S %z' "${FILE_MODIFIED_TIME}" +'%Y%m%d%H%M.%S'`
-		#echo "Modified: ${FILE_MODIFIED_TIME} | ${FORMATTED_TIMESTAMP} > ${1}"
-		
-		# Modify the last modified timestamp
-		touch -t  "${FORMATTED_TIMESTAMP}" $2
+	local FILE_MODIFIED_TIME="$(git show --pretty=format:%at --abbrev-commit ${FILE_REVISION_HASH} | head -n 1)"
+	if [ -z "$FILE_MODIFIED_TIME" ]; then
+		echo "?! $1 (not found in git)"
+		return
+	fi
+
+	# Check if the file is modified
+	local uncommited="$(git ls-files -t -dm -- "$1")"
+
+	# for displaying the date in readable format
+	#local FORMATTED_TIMESTAMP="$(date --date="${FILE_MODIFIED_TIME}" +'%d-%m-%Y %H:%M:%S %z')"
+	local FORMATTED_TIMESTAMP="@${FILE_MODIFIED_TIME}"
+
+	# Modify the last modified timestamp
+	#echo "[$(date -d "$FORMATTED_TIMESTAMP")]: $1"
+	#echo "$FILE_MODIFIED_TIME $1"
+	local current_mtime="$(stat -c %Y -- "$1")"
+	if [ "$current_mtime" = "$FILE_MODIFIED_TIME" ]; then
+		echo "ok $1"
+	elif [ -n "$uncommited" ]; then
+		echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
 	else
-		echo "Unknown Operating System to perform timestamp update" >&2
-		exit 1
+		if ${apply:-false}; then
+			echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, syncing...)"
+			touch -d "$FORMATTED_TIMESTAMP" -- "$1"
+		else
+			echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, no change)"
+		fi
 	fi
 }
 
-# Backup and update the "Internal Field Separator" to a newline. This is so that
-# we can deal with spaces in file names in the for loop below
-IFS_BAK=$IFS
-IFS="
-"
-# Loop through and fix timestamps on all files in our checked-out repository
-for file in $(git ls-files)
-do
-	updateFileTimeStamp "${file}" "${file}"
+# ... for FreeBSD and Mac OS X
+updateFileTimeStamp2() {
+	# Extract the file revision
+	local FILE_REVISION_HASH="$(getFileLastRevision "$1")"
+
+	# Extract the last modified timestamp
+	# Get the File last modified time
+	local FILE_MODIFIED_TIME="$(git show --pretty=format:%ai --abbrev-commit ${FILE_REVISION_HASH} | head -n 1)"
+
+	# Format the date for updating the timestamp
+	local FORMATTED_TIMESTAMP="$(date -j -f '%Y-%m-%d %H:%M:%S %z' "${FILE_MODIFIED_TIME}" +'%Y%m%d%H%M.%S')"
+		
+	# Modify the last modified timestamp
+	touch -t "${FORMATTED_TIMESTAMP}" -- "$1"
+}
+
+apply=false
+while [ $# -gt 0 ]; do
+	case "$1" in
+		-f) apply=true ;;
+		-n) apply=false ;;
+		--) shift; break ;;
+		*) break
+	esac
+	shift
 done
 
-# Revert the default delimiter
-IFS=$IFS_BAK
-IFS_BAK=
+# Make sure we are not running this on a bare Repository
+case "$(git config core.bare)" in
+	false)	;;
+	true)
+		echo "Cannot run this script on a bare Repository"
+		exit 1
+	;;
+	*)	echo "Error appened during core.bare detection."
+		exit 1
+esac
+
+#echo "Updating Git Repository Last Modified Time-stamp"
+
+# Obtain the Operating System
+case "${OS:-$(uname)}" in
+	  'Linux') ;;
+	  'Darwin'|'FreeBSD')
+		updateFileTimeStamp() { updateFileTimeStamp2 "$@"; }
+	  ;;
+	  *)
+		echo >&2 "Unknown Operating System to perform timestamp update"
+		exit 1
+esac
+
+if [ $# -eq 0 ]; then
+	# Loop through and fix timestamps on all files in our checked-out repository
+	git ls-files \
+	| (
+	IFS="$(printf '\n')"
+	while read -r file; do
+	#for file in $(git ls-files); do
+		updateFileTimeStamp "${file}"
+	done
+	)
+else
+	# Loop through and fix timestamps on all specified files
+	for file in "$@"; do
+		updateFileTimeStamp "${file}"
+	done
+fi
+
