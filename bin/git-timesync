@@ -131,7 +131,7 @@ case "$(git config core.bare)" in
 		echo "Cannot run this script on a bare Repository"
 		exit 1
 	;;
-	*)	echo "Error appened during core.bare detection"
+	*)	echo "Error appened during core.bare detection. Are you really inside a repository ?"
 		exit 1
 esac
 
