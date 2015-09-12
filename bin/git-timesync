@@ -71,7 +71,7 @@ updateFileTimeStamp() {
 	#echo "$FILE_MODIFIED_TIME $1"
 	local current_mtime="$(stat -c %Y -- "$1")"
 	if [ "$current_mtime" = "$FILE_MODIFIED_TIME" ]; then
-		echo "ok $1"
+		if ${verbose:-true}; then echo "ok $1"; fi
 	elif [ -n "$uncommited" ]; then
 		echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
 	else
@@ -101,11 +101,14 @@ updateFileTimeStamp2() {
 }
 
 apply=false
+verbose=true
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-f) apply=true ;;
 		-n) apply=false ;;
 		--) shift; break ;;
+		-v) verbose=true ;;
+		-q) verbose=false ;;
 		*) break
 	esac
 	shift
@@ -118,7 +121,7 @@ case "$(git config core.bare)" in
 		echo "Cannot run this script on a bare Repository"
 		exit 1
 	;;
-	*)	echo "Error appened during core.bare detection."
+	*)	echo "Error appened during core.bare detection"
 		exit 1
 esac
 
