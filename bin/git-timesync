@@ -45,8 +45,9 @@ updateFileTimeStamp() {
 	# Extract the file revision
 	local FILE_REVISION_HASH="$(getFileLastRevision "$1")"
 
-	if [ ! -f "$1" ]; then
-		echo >&2 "ERROR: target file does not exists. Unknown bug?!"
+	# if target does not exists and it's is not a [dead]link, raise an error
+	if [ ! -e "$1" ] && [ ! -h "$1" ]; then
+		echo >&2 "ERROR: Unknown bug ?! No sych target $1"
 		return 1
 	fi
 
