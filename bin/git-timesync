@@ -47,13 +47,17 @@ updateFileTimeStamp() {
 
 	# if target does not exists and it's is not a [dead]link, raise an error
 	if [ ! -e "$1" ] && [ ! -h "$1" ]; then
+		if [ -n "$(git ls-files -t -d -- "$1")" ]; then
+			if $verbose; then echo "?  $1 (deleted)"; fi
+			return
+		fi
 		echo >&2 "ERROR: Unknown bug ?! No sych target $1"
 		return 1
 	fi
 
 	local tracked="$(git ls-files -t -c -- "$1")"
 	if [ -z "$tracked" ]; then
-		echo "?  $1"
+		if $verbose; then echo "?  $1"; fi
 		return
 	fi
 
@@ -165,8 +169,9 @@ if [ $# -eq 0 ]; then
 	| (
 	IFS="$(printf '\n')"
 	while read -r file; do
-	#for file in $(git ls-files); do
-		updateFileTimeStamp "${file}"
+		if [ -z "$(git ls-files -t -d -- "$file")" ]; then
+			updateFileTimeStamp "${file}"
+		fi
 	done
 	)
 else
