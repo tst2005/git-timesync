@@ -81,17 +81,25 @@ updateFileTimeStamp() {
 	fi
 	if [ "$current_mtime" = "$FILE_MODIFIED_TIME" ]; then
 		if ${verbose:-true}; then echo "ok $1"; fi
-	elif [ -n "$uncommited" ]; then
-		echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
-	else
-		if ${apply:-false}; then
-			echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, syncing...)"
-			[ -h "$1" ] && touch -h -d "$FORMATTED_TIMESTAMP" -- "$1" || \
-			touch -d "$FORMATTED_TIMESTAMP" -- "$1"
-		else
-			echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, no change)"
-		fi
+		return
 	fi
+	if [ -n "$uncommited" ]; then
+#		if ${force:-false}; then
+#			echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
+#			do it
+#			return
+#		fi
+#			
+		echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
+		return
+	fi
+	if ${dryrun:-true}; then
+		echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, no change)"
+		return
+	fi
+	echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, syncing...)"
+	[ -h "$1" ] && touch -h -d "$FORMATTED_TIMESTAMP" -- "$1" || \
+	touch -d "$FORMATTED_TIMESTAMP" -- "$1"
 }
 
 # ... for FreeBSD and Mac OS X
@@ -110,14 +118,15 @@ updateFileTimeStamp2() {
 	touch -t "${FORMATTED_TIMESTAMP}" -- "$1"
 }
 
-apply=false
+force=false
+dryrun=false
 verbose=true
 debug=false
 while [ $# -gt 0 ]; do
 	case "$1" in
-		-f) apply=true ;;
-		-n) apply=false ;;
 		--) shift; break ;;
+		-f) force=true ;;
+		-n|--dryrun|--dry-run) dryrun=true ;;
 		-v) verbose=true ;;
 		-q) verbose=false ;;
 		--debug) debug=true ;;

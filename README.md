@@ -30,11 +30,13 @@ How to use it
 
 Make a fresh clone of any git repository with `git clone SOME_GIT_REPOSITORY_URL`
 
-See what is needed to sync with `git timesync`
+See what is needed to sync with `git timesync -n`
 
-If you want apply all change use `git timesync -f`
+If you want drop everything that is ok and see only what is needed to sync, use `git timesync -n -q`
 
-If you want apply change only in one file use `git timesync -f THE_WANTED_FILE`
+If you want apply all change, use `git timesync`
+
+If you want apply change only in one file, use `git timesync THE_WANTED_FILE`
 
 License
 =======
