@@ -85,6 +85,7 @@ updateFileTimeStamp() {
 	else
 		if ${apply:-false}; then
 			echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, syncing...)"
+			[ -h "$1" ] && touch -h -d "$FORMATTED_TIMESTAMP" -- "$1" || \
 			touch -d "$FORMATTED_TIMESTAMP" -- "$1"
 		else
 			echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, no change)"
