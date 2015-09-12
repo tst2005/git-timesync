@@ -45,6 +45,11 @@ updateFileTimeStamp() {
 	# Extract the file revision
 	local FILE_REVISION_HASH="$(getFileLastRevision "$1")"
 
+	if [ ! -f "$1" ]; then
+		echo >&2 "ERROR: target file does not exists. Unknown bug?!"
+		return 1
+	fi
+
 	local tracked="$(git ls-files -t -c -- "$1")"
 	if [ -z "$tracked" ]; then
 		echo "?  $1"
@@ -70,6 +75,9 @@ updateFileTimeStamp() {
 	#echo "[$(date -d "$FORMATTED_TIMESTAMP")]: $1"
 	#echo "$FILE_MODIFIED_TIME $1"
 	local current_mtime="$(stat -c %Y -- "$1")"
+	if $debug; then
+		echo >&2 "DEBUG: $1 (git_time=$FILE_MODIFIED_TIME current_time=$current_mtime delta=$(( ${current_mtime:-0} - ${FILE_MODIFIED_TIME:-0} )))"
+	fi
 	if [ "$current_mtime" = "$FILE_MODIFIED_TIME" ]; then
 		if ${verbose:-true}; then echo "ok $1"; fi
 	elif [ -n "$uncommited" ]; then
@@ -102,6 +110,7 @@ updateFileTimeStamp2() {
 
 apply=false
 verbose=true
+debug=false
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-f) apply=true ;;
@@ -109,6 +118,7 @@ while [ $# -gt 0 ]; do
 		--) shift; break ;;
 		-v) verbose=true ;;
 		-q) verbose=false ;;
+		--debug) debug=true ;;
 		*) break
 	esac
 	shift
