@@ -188,7 +188,7 @@ else
 	# Loop through and fix timestamps on all specified files
 	for file in "$@"; do
 		if [ -d "$file" ] && [ ! -h "$file" ]; then # is a real directory (not a symlink to a directory)
-			echo "try inside $file"
+			echo "now inside $file"
 			( cd -- "$file" && updateFileTimeStampInCwd || true; )
 		else
 			if $need_check_bare; then
