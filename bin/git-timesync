@@ -127,11 +127,11 @@ is_not_base_repo() {
 	case "$(git config core.bare)" in
 		false)	;;
 		true)
-			echo "Cannot run this script on a bare Repository"
-			exit 1
+			echo "$(pwd): Cannot run this script on a bare Repository"
+			return 1
 		;;
-		*)	echo "Error appened during core.bare detection. Are you really inside a repository ?"
-			exit 1
+		*)	echo "$(pwd): Error appended during core.bare detection. Are you really inside a repository ?"
+			return 1
 	esac
 }
 
@@ -153,8 +153,6 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-#echo "Updating Git Repository Last Modified Time-stamp"
-
 # Obtain the Operating System
 case "${OS:-$(uname)}" in
 	  'Linux') ;;
@@ -167,8 +165,7 @@ case "${OS:-$(uname)}" in
 esac
 
 updateFileTimeStampInCwd() {
-	is_not_base_repo
-
+	is_not_base_repo && \
 	git ls-files -z \
 	| tr '\0' '\n' \
 	| (
@@ -183,17 +180,18 @@ updateFileTimeStampInCwd() {
 
 if [ $# -eq 0 ]; then
 	# Loop through and fix timestamps on all files in our checked-out repository
-	is_not_base_repo	
+	is_not_base_repo && \
 	updateFileTimeStampInCwd
 else
 	need_check_bare=true
 	# Loop through and fix timestamps on all specified files
 	for file in "$@"; do
 		if [ -d "$file" ] && [ ! -h "$file" ]; then # is a real directory (not a symlink to a directory)
+			echo "try inside $file"
 			( cd -- "$file" && is_not_base_repo && updateFileTimeStampInCwd; )
 		else
 			if $need_check_bare; then
-				is_not_base_repo
+				is_not_base_repo || exit 1
 				need_check_bare=false
 			fi
 			updateFileTimeStamp "${file}"
