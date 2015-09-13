@@ -133,6 +133,7 @@ is_not_base_repo() {
 		*)	echo "$(pwd): Error appended during core.bare detection. Are you really inside a repository ?"
 			return 1
 	esac
+	return 0
 }
 
 
@@ -165,7 +166,7 @@ case "${OS:-$(uname)}" in
 esac
 
 updateFileTimeStampInCwd() {
-	is_not_base_repo || return 1
+	is_not_base_repo || return
 
 	git ls-files -z \
 	| tr '\0' '\n' \
@@ -188,7 +189,7 @@ else
 	for file in "$@"; do
 		if [ -d "$file" ] && [ ! -h "$file" ]; then # is a real directory (not a symlink to a directory)
 			echo "try inside $file"
-			( cd -- "$file" && updateFileTimeStampInCwd; )
+			( cd -- "$file" && updateFileTimeStampInCwd || true; )
 		else
 			if $need_check_bare; then
 				is_not_base_repo || continue
