@@ -165,7 +165,8 @@ case "${OS:-$(uname)}" in
 esac
 
 updateFileTimeStampInCwd() {
-	is_not_base_repo && \
+	is_not_base_repo || return 1
+
 	git ls-files -z \
 	| tr '\0' '\n' \
 	| (
@@ -180,7 +181,6 @@ updateFileTimeStampInCwd() {
 
 if [ $# -eq 0 ]; then
 	# Loop through and fix timestamps on all files in our checked-out repository
-	is_not_base_repo && \
 	updateFileTimeStampInCwd
 else
 	need_check_bare=true
@@ -188,10 +188,10 @@ else
 	for file in "$@"; do
 		if [ -d "$file" ] && [ ! -h "$file" ]; then # is a real directory (not a symlink to a directory)
 			echo "try inside $file"
-			( cd -- "$file" && is_not_base_repo && updateFileTimeStampInCwd; )
+			( cd -- "$file" && updateFileTimeStampInCwd; )
 		else
 			if $need_check_bare; then
-				is_not_base_repo || exit 1
+				is_not_base_repo || continue
 				need_check_bare=false
 			fi
 			updateFileTimeStamp "${file}"
