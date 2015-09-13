@@ -165,7 +165,8 @@ esac
 
 if [ $# -eq 0 ]; then
 	# Loop through and fix timestamps on all files in our checked-out repository
-	git ls-files \
+	git ls-files -z \
+	| tr '\0' '\n' \
 	| (
 	IFS="$(printf '\n')"
 	while read -r file; do
