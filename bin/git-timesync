@@ -122,6 +122,20 @@ updateFileTimeStamp2() {
 	touch -t "${FORMATTED_TIMESTAMP}" -- "$1"
 }
 
+# Make sure we are not running this on a bare Repository
+is_not_base_repo() {
+	case "$(git config core.bare)" in
+		false)	;;
+		true)
+			echo "Cannot run this script on a bare Repository"
+			exit 1
+		;;
+		*)	echo "Error appened during core.bare detection. Are you really inside a repository ?"
+			exit 1
+	esac
+}
+
+
 force=false
 dryrun=false
 verbose=true
@@ -139,17 +153,6 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-# Make sure we are not running this on a bare Repository
-case "$(git config core.bare)" in
-	false)	;;
-	true)
-		echo "Cannot run this script on a bare Repository"
-		exit 1
-	;;
-	*)	echo "Error appened during core.bare detection. Are you really inside a repository ?"
-		exit 1
-esac
-
 #echo "Updating Git Repository Last Modified Time-stamp"
 
 # Obtain the Operating System
@@ -163,8 +166,9 @@ case "${OS:-$(uname)}" in
 		exit 1
 esac
 
-if [ $# -eq 0 ]; then
-	# Loop through and fix timestamps on all files in our checked-out repository
+updateFileTimeStampInCwd() {
+	is_not_base_repo
+
 	git ls-files -z \
 	| tr '\0' '\n' \
 	| (
@@ -175,10 +179,25 @@ if [ $# -eq 0 ]; then
 		fi
 	done
 	)
+}
+
+if [ $# -eq 0 ]; then
+	# Loop through and fix timestamps on all files in our checked-out repository
+	is_not_base_repo	
+	updateFileTimeStampInCwd
 else
+	need_check_bare=true
 	# Loop through and fix timestamps on all specified files
 	for file in "$@"; do
-		updateFileTimeStamp "${file}"
+		if [ -d "$file" ] && [ ! -h "$file" ]; then # is a real directory (not a symlink to a directory)
+			( cd -- "$file" && is_not_base_repo && updateFileTimeStampInCwd; )
+		else
+			if $need_check_bare; then
+				is_not_base_repo
+				need_check_bare=false
+			fi
+			updateFileTimeStamp "${file}"
+		fi
 	done
 fi
 
