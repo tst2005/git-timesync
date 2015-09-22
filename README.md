@@ -13,7 +13,7 @@ git clone https://github.com/tst2005/git-timesync
 ```
 or download the git-timesync file
 ```
-wget https://github.com/tst2005/git-timefix/blob/master/bin/git-timesync
+wget https://github.com/tst2005/git-timesync/raw/master/bin/git-timesync
 ```
 
 Add it in the git path :
