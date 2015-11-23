@@ -190,10 +190,38 @@ updateFileTimeStampInCwd() {
 	done
 	)
 }
+updateFileTimeStampInCwd() {
+	is_not_base_repo || return
+
+	# list all visible files and directory
+	for file in *; do
+		echo "DEBUG: - $file"
+		# ignore deleted or uncommited files
+		if [ -n "$(git ls-files -t -d -- "$file")" ]; then
+			continue
+		fi
+
+		# is a real directory (not a symlink)
+		if [ -d "$file" ] && [ ! -h "$file" ]; then
+			# git does not track directory, use the most recent content ?
+			echo "DEBUG: we have a directory $file"
+			(
+			cd -- "$file" && updateFileTimeStampInCwd
+			)
+			continue
+		fi
+		if [ -f "$file" ] && [ ! -h "$file" ]; then
+			echo "DEBUG: got a file $file"
+			echo updateFileTimeStamp "${file}"
+		fi
+		# symlink are not synced for now
+	done
+}
+
 
 if [ $# -eq 0 ]; then
 	# Loop through and fix timestamps on all files in our checked-out repository
-	#if [ -z "${recursive" ]; then recursive=true; fi
+	#if [ -z "${recursive}" ]; then recursive=true; fi
 	if ${recursive:-false}; then
 		updateFileTimeStampInCwd
 	else
