@@ -111,8 +111,8 @@ updateFileTimeStamp() {
 		return
 	fi
 	echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, syncing...)"
-	[ -h "$1" ] && touch -h -d "$FORMATTED_TIMESTAMP" -- "$1" || \
-	touch -d "$FORMATTED_TIMESTAMP" -- "$1"
+	[ -h "$1" ] && touch -c -h -d "$FORMATTED_TIMESTAMP" -- "$1" || \
+	touch -c -d "$FORMATTED_TIMESTAMP" -- "$1"
 }
 
 # ... for FreeBSD and Mac OS X
