@@ -48,7 +48,7 @@ updateFileTimeStamp() {
 			if $verbose; then echo "?  $1 (deleted)"; fi
 			return
 		fi
-		echo >&2 "ERROR: Unknown bug ?! No sych target $1"
+		echo >&2 "ERROR: Unknown bug ?! No such target $1"
 		return 1
 	fi
 
