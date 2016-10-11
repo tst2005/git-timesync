@@ -16,14 +16,14 @@ or download the git-timesync file
 wget https://github.com/tst2005/git-timesync/raw/master/bin/git-timesync
 ```
 
-Add it in the git path :
+For it to be found by git, you need to install it in a directory in your ` $PATH`. For user installation (no root needed, will only work for current user) we recommend `~/.local/bin`. You can add the following to your `.bashrc` or `.zshrc` if you don't already have it configured.
 
+```sh
+export PATH=~/.local/bin:$PATH
 ```
-FIXME how to do what ?
-```
+Then just move `git-timesync` to `~/.local/bin/`.
 
-Or use the `./git-timesync` instead of `git timesync`
-
+For system-wide installation, move it to something that's in the path of all users. We recommend `/usr/local/bin/`.
 
 How to use it
 =============
