@@ -216,6 +216,7 @@ else
 		git log --format='format:' --name-only "$fromrecent" |
 		sort -u |
 		while read -r file; do
+			[ -n "$file" ] || continue
 			timesyncThisFile "$file"
 		done
 	else
