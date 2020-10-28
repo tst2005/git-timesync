@@ -152,6 +152,7 @@ force=false
 dryrun=false
 verbose=true
 debug=false
+fromrecent=''
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--) shift; break ;;
@@ -159,6 +160,7 @@ while [ $# -gt 0 ]; do
 		-n|--dryrun|--dry-run) dryrun=true ;;
 		-v) verbose=true ;;
 		-q) verbose=false ;;
+		-[1-9]|-[1-9][0-9]|-[1-9][0-9][0-9]|-[1-9][0-9][0-9][0-9]) fromrecent="$1" ;;
 		--debug) debug=true ;;
 		*) break
 	esac
@@ -190,23 +192,36 @@ updateFileTimeStampInCwd() {
 	)
 }
 
-if [ $# -eq 0 ]; then
+if [ $# -eq 0 ] && [ -z "$fromrecent" ]; then
 	# Loop through and fix timestamps on all files in our checked-out repository
 	updateFileTimeStampInCwd
 else
 	need_check_bare=true
-	# Loop through and fix timestamps on all specified files
-	for file in "$@"; do
-		if [ -d "$file" ] && [ ! -h "$file" ]; then # is a real directory (not a symlink to a directory)
-			echo "now inside $file"
-			( cd -- "$file" && updateFileTimeStampInCwd || true; )
+
+	timesyncThisFile() {
+		if [ -d "$1" ] && [ ! -h "$1" ]; then # is a real directory (not a symlink to a directory)
+			echo "now inside $1"
+			( cd -- "$1" && updateFileTimeStampInCwd || true; )
 		else
 			if $need_check_bare; then
 				is_not_base_repo || continue
 				need_check_bare=false
 			fi
-			updateFileTimeStamp "${file}"
+			updateFileTimeStamp "$1"
 		fi
-	done
+	}
+
+	# Loop through and fix timestamps on all specified files
+	if [ -n "$fromrecent" ]; then
+		git log --format='' --name-only -1 |
+		sort -u |
+		while read -r file; do
+			timesyncThisFile "$file"
+		done
+	else
+		for file in "$@"; do
+			timesyncThisFile "$file"
+		done
+	fi
 fi
 
