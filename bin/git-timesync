@@ -213,7 +213,7 @@ else
 
 	# Loop through and fix timestamps on all specified files
 	if [ -n "$fromrecent" ]; then
-		git log --format='' --name-only -1 |
+		git log --format='format:' --name-only "$$fromrecent" |
 		sort -u |
 		while read -r file; do
 			timesyncThisFile "$file"
