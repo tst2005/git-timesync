@@ -217,6 +217,7 @@ else
 		sort -u |
 		while read -r file; do
 			[ -n "$file" ] || continue
+			[ -e "$file" ] || continue
 			timesyncThisFile "$file"
 		done
 	else
