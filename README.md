@@ -9,7 +9,7 @@ The easiest way to install (or update) this script on your computer is to downlo
 Suppose that we want to place it in the `$HOME/bin` folder; to do so, you can just execute the following Bash commands:
 
 ```bash
-curl -o "$HOME/bin/git-timesync" https://raw.githubusercontent.com/tst2005/git-timesync/master/bin/git-timesync
+curl -o "$HOME/bin/git-timesync" https://raw.githubusercontent.com/tst2005/git-timesync/master/git-timesync
 chmod +x "$HOME/bin/git-timesync"
 ```
 
