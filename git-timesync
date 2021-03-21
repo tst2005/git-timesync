@@ -50,7 +50,7 @@ getFileMTimeByPath() {
 }
 
 # Extract the actual last modified timestamp of the file and Update the timestamp
-# ... for Linux
+# ... for Linux and other OSes
 updateFileTimeStamp() {
 	# if target does not exists and it's is not a [dead]link, raise an error
 	if [ ! -e "$1" ] && [ ! -h "$1" ]; then
@@ -157,13 +157,10 @@ done
 
 # Obtain the Operating System
 case "${OS:-$(uname)}" in
-	  'Linux') ;;
 	  'Darwin'|'FreeBSD')
 		updateFileTimeStamp() { updateFileTimeStamp2 "$@"; }
 	  ;;
-	  *)
-		echo >&2 "Unknown Operating System to perform timestamp update"
-		exit 1
+	  *) # Linux, Windows (Git Bash) or other OS
 esac
 
 updateFileTimeStampInCwd() {
