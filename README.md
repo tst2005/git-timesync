@@ -21,30 +21,36 @@ Make a fresh clone of a Git repository of your choice:
 git clone GIT_REPOSITORY_URL
 ```
 
-See what is needed to sync with:
+See which files are OK and which ones need to be synchronized (**dry-run**) with:
 
 ```bash
-git timesync -n
+git timesync --dry-run
 ```
 
-If you want to drop everything that is OK and see only what is needed to sync, use:
+If you want to drop everything that is OK and show **only** the files which timestamp **needs to be synchronized**:
 
 ```bash
-git timesync -n -q
+git timesync --dry-run --quiet
 ```
 
-If you want to apply all the changes, use:
+If you want to **apply all the changes**, use:
 
 ```bash
 git timesync
 ```
 
-If you want apply a change only to one file, use:
+If you want **apply a change only to one file**, use:
 
 ```bash
 git timesync THE_WANTED_FILE
 ```
 
+If you want to view the **help message**:
+
+```bash
+git timesync --help
+```
+
 ## License
 
-I usually release my code under the *MIT license*, but I will follow the original author's one.
+I usually release my code under the *MIT license*, but for this project I will follow the original author's one.
