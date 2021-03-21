@@ -137,6 +137,19 @@ is_not_base_repo() {
 	return 0
 }
 
+printHelp() {
+	echo "Usage: git-timesync [OPTION]... [FILE]..."
+	echo
+	echo "  -h, --help                  Print this help message"
+	echo "  -n, --dry-run, --dryrun     Perform a dry-run to see which files" \
+		"are OK and which ones need to be synchronized"
+	echo "  -q, --quiet                 Quiet mode: drop everything that is" \
+		"OK and show only the files which timestamp needs to be synchronized"
+}
+
+################################################################################
+############################## MAIN SCRIPT LOGIC ###############################
+################################################################################
 
 dryrun=false
 verbose=true
@@ -145,9 +158,9 @@ fromrecent=''
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--) shift; break ;;
-		-n|--dryrun|--dry-run) dryrun=true ;;
-		-v) verbose=true ;;
-		-q) verbose=false ;;
+		-h|--help) printHelp; exit 0 ;;
+		-n|--dry-run|--dryrun) dryrun=true ;;
+		-q|--quiet) verbose=false ;;
 		-[1-9]|-[1-9][0-9]|-[1-9][0-9][0-9]|-[1-9][0-9][0-9][0-9]) fromrecent="$1" ;;
 		--debug) debug=true ;;
 		*) break
