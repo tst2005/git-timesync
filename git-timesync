@@ -2,7 +2,8 @@
 
 set -e
 
-# original are: https://gist.github.com/jeffery/1115504
+# The original version of this script can be found at: https://gist.github.com/jeffery/1115504
+
 ####
 # Helper script to update the Last modified timestamp of files in a Git SCM
 # Projects working Copy
@@ -22,16 +23,11 @@ set -e
 ####
 # Author: TsT worldmaster.fr <tst2005@gmail.com>
 #
-# Improvement :
-# - dry-run by default (use -f to apply time change)
+# Improvements:
+# - dry-run ("-n" flag)
 # - pass files to check as argument
 # - do not time sync modified files
 # - do not time sync untracked files
-# - ...
-#
-# TODO:
-# - Linux version improved, to the same for MacOS X and FreeBSD
-# - ...
 ####
 
 # Get the last revision hash of a particular file in the git repository
@@ -53,7 +49,7 @@ getFileMTimeByPath() {
 	)
 }
 
-# Extract the actual last modified timestamp of the file and Update the time-stamp
+# Extract the actual last modified timestamp of the file and Update the timestamp
 # ... for Linux
 updateFileTimeStamp() {
 	# if target does not exists and it's is not a [dead]link, raise an error
