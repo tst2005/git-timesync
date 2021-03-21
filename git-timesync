@@ -2,7 +2,8 @@
 
 set -e
 
-# original are: https://gist.github.com/jeffery/1115504
+# The original version of this script can be found at: https://gist.github.com/jeffery/1115504
+
 ####
 # Helper script to update the Last modified timestamp of files in a Git SCM
 # Projects working Copy
@@ -22,16 +23,11 @@ set -e
 ####
 # Author: TsT worldmaster.fr <tst2005@gmail.com>
 #
-# Improvement :
-# - dry-run by default (use -f to apply time change)
+# Improvements:
+# - dry-run ("-n" flag)
 # - pass files to check as argument
 # - do not time sync modified files
 # - do not time sync untracked files
-# - ...
-#
-# TODO:
-# - Linux version improved, to the same for MacOS X and FreeBSD
-# - ...
 ####
 
 # Get the last revision hash of a particular file in the git repository
@@ -53,8 +49,8 @@ getFileMTimeByPath() {
 	)
 }
 
-# Extract the actual last modified timestamp of the file and Update the time-stamp
-# ... for Linux
+# Extract the actual last modified timestamp of the file and Update the timestamp
+# ... for Linux and other OSes
 updateFileTimeStamp() {
 	# if target does not exists and it's is not a [dead]link, raise an error
 	if [ ! -e "$1" ] && [ ! -h "$1" ]; then
@@ -99,12 +95,6 @@ updateFileTimeStamp() {
 		return
 	fi
 	if [ -n "$uncommited" ]; then
-#		if ${force:-false}; then
-#			echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
-#			do it
-#			return
-#		fi
-#			
 		echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
 		return
 	fi
@@ -147,8 +137,20 @@ is_not_base_repo() {
 	return 0
 }
 
+printHelp() {
+	echo "Usage: git-timesync [OPTION]... [FILE]..."
+	echo
+	echo "  -h, --help                  Print this help message"
+	echo "  -n, --dry-run, --dryrun     Perform a dry-run to see which files" \
+		"are OK and which ones need to be synchronized"
+	echo "  -q, --quiet                 Quiet mode: drop everything that is" \
+		"OK and show only the files which timestamp needs to be synchronized"
+}
 
-force=false
+################################################################################
+############################## MAIN SCRIPT LOGIC ###############################
+################################################################################
+
 dryrun=false
 verbose=true
 debug=false
@@ -156,10 +158,9 @@ fromrecent=''
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--) shift; break ;;
-		-f) force=true ;;
-		-n|--dryrun|--dry-run) dryrun=true ;;
-		-v) verbose=true ;;
-		-q) verbose=false ;;
+		-h|--help) printHelp; exit 0 ;;
+		-n|--dry-run|--dryrun) dryrun=true ;;
+		-q|--quiet) verbose=false ;;
 		-[1-9]|-[1-9][0-9]|-[1-9][0-9][0-9]|-[1-9][0-9][0-9][0-9]) fromrecent="$1" ;;
 		--debug) debug=true ;;
 		*) break
@@ -169,13 +170,10 @@ done
 
 # Obtain the Operating System
 case "${OS:-$(uname)}" in
-	  'Linux') ;;
 	  'Darwin'|'FreeBSD')
 		updateFileTimeStamp() { updateFileTimeStamp2 "$@"; }
 	  ;;
-	  *)
-		echo >&2 "Unknown Operating System to perform timestamp update"
-		exit 1
+	  *) # Linux, Windows (Git Bash) or other OS
 esac
 
 updateFileTimeStampInCwd() {

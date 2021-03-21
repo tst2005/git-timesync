@@ -1,44 +1,56 @@
+# git-timesync
+
+When you `git clone` a repository, the lastmod timestamps of the created files are set to the current date and time. This script allows you to synchronize the **lastmod timestamps** of the files in the **working tree** from the **commit** times of the Git repository.
+
+## Installation
+
+The easiest way to install (or update) this script on your computer is to download and place it in a directory in your `$PATH` and `chmod +x` it.
+
+Suppose that we want to place it in the `$HOME/bin` folder; to do so, you can just execute the following Bash commands:
+
+```bash
+curl -o "$HOME/bin/git-timesync" https://raw.githubusercontent.com/tst2005/git-timesync/master/git-timesync
+chmod +x "$HOME/bin/git-timesync"
+```
+
+## Usage
+
+Make a fresh clone of a Git repository of your choice:
+
+```bash
+git clone GIT_REPOSITORY_URL
+```
+
+See which files are OK and which ones need to be synchronized (**dry-run**) with:
+
+```bash
+git timesync --dry-run
+```
+
+If you want to drop everything that is OK and show **only** the files which timestamp **needs to be synchronized**:
+
+```bash
+git timesync --dry-run --quiet
+```
+
+If you want to **apply all the changes**, use:
+
+```bash
 git timesync
-============
-
-When you make a git clone the created file are the current date.
-This script allow you to change the file timestamp to the same than the repository one.
-
-How to install it
-=================
-
-Clone this repository
-```
-git clone https://github.com/tst2005/git-timesync
-```
-or download the git-timesync file
-```
-wget https://github.com/tst2005/git-timesync/raw/master/bin/git-timesync
 ```
 
-For it to be found by git, you need to install it in a directory in your ` $PATH`. For user installation (no root needed, will only work for current user) we recommend `~/.local/bin`. You can add the following to your `.bashrc` or `.zshrc` if you don't already have it configured.
+If you want **apply a change only to one file**, use:
 
-```sh
-export PATH=~/.local/bin:$PATH
+```bash
+git timesync THE_WANTED_FILE
 ```
-Then just move `git-timesync` to `~/.local/bin/`.
 
-For system-wide installation, move it to something that's in the path of all users. We recommend `/usr/local/bin/`.
+If you want to view the **help message**:
 
-How to use it
-=============
+```bash
+git timesync --help
+```
 
-Make a fresh clone of any git repository with `git clone SOME_GIT_REPOSITORY_URL`
+## License
 
-See what is needed to sync with `git timesync -n`
-
-If you want drop everything that is ok and see only what is needed to sync, use `git timesync -n -q`
-
-If you want apply all change, use `git timesync`
-
-If you want apply change only in one file, use `git timesync THE_WANTED_FILE`
-
-License
-=======
-
-I usualy release my code under MIT license, but I will follow the original author's one.
+I usually release my code under the *MIT license*, but for this project I will follow the original author's one.
