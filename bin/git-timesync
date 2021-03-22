@@ -219,14 +219,14 @@ done
 
 # Obtain the Operating System
 case "${OS:-$(uname)}" in
-	  'Linux') ;;
-	  'MINGW64'*)
+	'Linux') ;;
+	'MINGW64'*)
 		updateFileTimeStamp() { updateFileTimeStampMINGW64 "$@"; }
-	  ;;
-	  'Darwin'|'FreeBSD')
+	;;
+	'Darwin'|'FreeBSD')
 		updateFileTimeStamp() { updateFileTimeStampBSD "$@"; }
-	  ;;
-	  *)
+	;;
+	*)
 		echo >&2 "Unknown Operating System to perform timestamp update"
 		exit 1
 esac
