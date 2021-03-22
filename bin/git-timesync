@@ -132,6 +132,11 @@ updateFileTimeStamp() {
 	touch -c -d "$FORMATTED_TIMESTAMP" -- "$1"
 }
 
+# ... and MINGW64 (used by Windows GIT Bash)
+updateFileTimeStampMINGW64() {
+	updateFileTimeStamp "$@"
+}
+
 # ... for FreeBSD and Mac OS X
 updateFileTimeStampBSD() {
 	# Extract the file revision
@@ -215,6 +220,9 @@ done
 # Obtain the Operating System
 case "${OS:-$(uname)}" in
 	  'Linux') ;;
+	  'MINGW64'*)
+		updateFileTimeStamp() { updateFileTimeStampMINGW64 "$@"; }
+	  ;;
 	  'Darwin'|'FreeBSD')
 		updateFileTimeStamp() { updateFileTimeStampBSD "$@"; }
 	  ;;
