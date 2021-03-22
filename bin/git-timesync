@@ -149,6 +149,23 @@ is_not_base_repo() {
 	return 0
 }
 
+updateFileTimeStampInCwd() {
+	is_not_base_repo || return
+
+	git ls-files -z \
+	| tr '\0' '\n' \
+	| (
+	while read -r file; do
+		if [ -z "$(git ls-files -t -d -- "$file")" ]; then
+			updateFileTimeStamp "${file}"
+		fi
+	done
+	)
+}
+
+################################################################################
+############################## MAIN SCRIPT LOGIC ###############################
+################################################################################
 
 dryrun=false
 verbose=true
@@ -177,20 +194,6 @@ case "${OS:-$(uname)}" in
 		echo >&2 "Unknown Operating System to perform timestamp update"
 		exit 1
 esac
-
-updateFileTimeStampInCwd() {
-	is_not_base_repo || return
-
-	git ls-files -z \
-	| tr '\0' '\n' \
-	| (
-	while read -r file; do
-		if [ -z "$(git ls-files -t -d -- "$file")" ]; then
-			updateFileTimeStamp "${file}"
-		fi
-	done
-	)
-}
 
 if [ $# -eq 0 ] && [ -z "$fromrecent" ]; then
 	# Loop through and fix timestamps on all files in our checked-out repository
