@@ -99,12 +99,6 @@ updateFileTimeStamp() {
 		return
 	fi
 	if [ -n "$uncommited" ]; then
-#		if ${force:-false}; then
-#			echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
-#			do it
-#			return
-#		fi
-#			
 		echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
 		return
 	fi
@@ -148,7 +142,6 @@ is_not_base_repo() {
 }
 
 
-force=false
 dryrun=false
 verbose=true
 debug=false
@@ -156,7 +149,6 @@ fromrecent=''
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--) shift; break ;;
-		-f) force=true ;;
 		-n|--dryrun|--dry-run) dryrun=true ;;
 		-v) verbose=true ;;
 		-q) verbose=false ;;
