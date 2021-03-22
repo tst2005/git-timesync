@@ -2,8 +2,21 @@
 
 set -e
 
-# original are: https://gist.github.com/jeffery/1115504
 ####
+# Author: TsT worldmaster.fr <tst2005@gmail.com>
+#
+# Improvements:
+# - dry-run ("-n" flag)
+# - pass files to check as argument
+# - do not time sync modified files
+# - do not time sync untracked files
+# - performance improvment
+# - be able to apply timesync only on files present in the N last commits
+####
+
+####
+# The original version of this script can be found at: https://gist.github.com/jeffery/1115504
+#
 # Helper script to update the Last modified timestamp of files in a Git SCM
 # Projects working Copy
 #
@@ -19,20 +32,15 @@ set -e
 # Author: Jeffery Fernandez <jeffery@fernandez.net.au>
 ####
 
-####
-# Author: TsT worldmaster.fr <tst2005@gmail.com>
-#
-# Improvement :
-# - dry-run by default (use -f to apply time change)
-# - pass files to check as argument
-# - do not time sync modified files
-# - do not time sync untracked files
-# - ...
-#
-# TODO:
-# - Linux version improved, to the same for MacOS X and FreeBSD
-# - ...
-####
+showUsage() {
+	echo "Usage: git-timesync [OPTION]... [FILE]..."
+	echo
+	echo "  -h, --help                  Print this help message"
+	echo "  -n, --dry-run, --dryrun     Perform a dry-run to see which files" \
+		"are OK and which ones need to be synchronized"
+	echo "  -q, --quiet                 Quiet mode: drop everything that is" \
+		"OK and show only the files which timestamp needs to be synchronized"
+}
 
 # Get the last revision hash of a particular file in the git repository
 getFileLastRevision() {
