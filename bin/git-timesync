@@ -75,7 +75,6 @@ getFileMTimeByPath() {
 }
 
 # Extract the actual last modified timestamp of the file and Update the timestamp
-# ... for Linux
 updateFileTimeStamp() {
 	# if target does not exists and it's is not a [dead]link, raise an error
 	if [ ! -e "$1" ] && [ ! -h "$1" ]; then
@@ -106,12 +105,12 @@ updateFileTimeStamp() {
 
 	# for displaying the date in readable format
 	#local FORMATTED_TIMESTAMP="$(date --date="${FILE_MODIFIED_TIME}" +'%d-%m-%Y %H:%M:%S %z')"
-	local FORMATTED_TIMESTAMP="@${FILE_MODIFIED_TIME}"
+	#local FORMATTED_TIMESTAMP="@${FILE_MODIFIED_TIME}"
 
 	# Modify the last modified timestamp
 	#echo "[$(date -d "$FORMATTED_TIMESTAMP")]: $1"
 	#echo "$FILE_MODIFIED_TIME $1"
-	local current_mtime="$(stat -c %Y -- "$1")"
+	local current_mtime="$(getmtime "$1")"
 	if $debug; then
 		echo >&2 "DEBUG: $1 (git_time=$FILE_MODIFIED_TIME current_time=$current_mtime delta=$(( ${current_mtime:-0} - ${FILE_MODIFIED_TIME:-0} )))"
 	fi
@@ -128,87 +127,12 @@ updateFileTimeStamp() {
 		return
 	fi
 	echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, syncing...)"
-	[ -h "$1" ] && touch -c -h -d "$FORMATTED_TIMESTAMP" -- "$1" || \
-	touch -c -d "$FORMATTED_TIMESTAMP" -- "$1"
+	#[ -h "$1" ] && touch -c -h -d "$FORMATTED_TIMESTAMP" -- "$1" || \
+	#touch -c -d "$FORMATTED_TIMESTAMP" -- "$1"
+	unixtime_touch -c -h -- "$1"
 }
 
-# ... and MINGW64 (used by Windows GIT Bash)
-updateFileTimeStampMINGW64() {
-	updateFileTimeStamp "$@"
-}
 
-# ... for FreeBSD and Mac OS X
-updateFileTimeStampBSD() {
-	# Extract the file revision
-	local FILE_REVISION_HASH="$(getFileLastRevision "$1")"
-
-	# Extract the last modified timestamp
-	# Get the File last modified time
-	local FILE_MODIFIED_TIME="$(git show --pretty=format:%ai --abbrev-commit ${FILE_REVISION_HASH} | head -n 1)"
-
-	# Format the date for updating the timestamp
-	local FORMATTED_TIMESTAMP="$(date -j -f '%Y-%m-%d %H:%M:%S %z' "${FILE_MODIFIED_TIME}" +'%Y%m%d%H%M.%S')"
-		
-	# Modify the last modified timestamp
-	touch -t "${FORMATTED_TIMESTAMP}" -- "$1"
-}
-updateFileTimeStampBSD() {
-	# if target does not exists and it's is not a [dead]link, raise an error
-	if [ ! -e "$1" ] && [ ! -h "$1" ]; then
-		if [ -n "$(git ls-files -t -d -- "$1")" ]; then
-			if $verbose; then echo "?  $1 (deleted)"; fi
-			return
-		fi
-		echo >&2 "ERROR: Unknown bug ?! No such target $1"
-		return 1
-	fi
-
-	local tracked="$(git ls-files -t -c -- "$1")"
-	if [ -z "$tracked" ]; then
-		if $verbose; then echo "?  $1"; fi
-		return
-	fi
-
-	# Extract the last modified timestamp
-	# Get the File last modified time
-	local FILE_MODIFIED_TIME="$(getFileMTimeByPath "$1")"
-	if [ -z "$FILE_MODIFIED_TIME" ]; then
-		echo "?! $1 (not found in git)"
-		return
-	fi
-
-	# Check if the file is modified
-	local uncommited="$(git ls-files -t -dm -- "$1")"
-
-	# for displaying the date in readable format
-	#local FORMATTED_TIMESTAMP="$(date --date="${FILE_MODIFIED_TIME}" +'%d-%m-%Y %H:%M:%S %z')"
-#@	local FORMATTED_TIMESTAMP="@${FILE_MODIFIED_TIME}"
-	local FORMATTED_TIMESTAMP="$(date -j -r "${FILE_MODIFIED_TIME}" +'%Y%m%d%H%M.%S')"
-
-	# Modify the last modified timestamp
-	#echo "[$(date -d "$FORMATTED_TIMESTAMP")]: $1"
-	#echo "$FILE_MODIFIED_TIME $1"
-#@	local current_mtime="$(stat -c %Y -- "$1")"
-	local current_mtime="$(stat -f %m -- "$1")"
-	if $debug; then
-		echo >&2 "DEBUG: $1 (git_time=$FILE_MODIFIED_TIME current_time=$current_mtime delta=$(( ${current_mtime:-0} - ${FILE_MODIFIED_TIME:-0} )))"
-	fi
-	if [ "$current_mtime" = "$FILE_MODIFIED_TIME" ]; then
-		if ${verbose:-true}; then echo "ok $1"; fi
-		return
-	fi
-	if [ -n "$uncommited" ]; then
-		echo "C  $1 (modified, not commited, $(( $current_mtime - $FILE_MODIFIED_TIME ))s recent)"
-		return
-	fi
-	if ${dryrun:-true}; then
-		echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, no change)"
-		return
-	fi
-	echo "!! $1 (desync: $(( $current_mtime - $FILE_MODIFIED_TIME ))s, syncing...)"
-#@	touch -c -h -d "$FORMATTED_TIMESTAMP" -- "$1"
-	touch -c -h -t "$FORMATTED_TIMESTAMP" -- "$1"
-}
 
 # Make sure we are not running this on a bare Repository
 is_not_base_repo() {
@@ -251,6 +175,24 @@ timesyncThisFile() {
 	fi
 }
 
+# ... for Linux ... and MINGW64 (used by Windows GIT Bash)
+linux_unixtime_touch() {
+	local FORMATTED_TIMESTAMP="@${FILE_MODIFIED_TIME}"
+	touch -d "$FORMATTED_TIMESTAMP" "$@"
+}
+linux_getmtime() {
+	stat -c %Y -- "$1"
+}
+
+# ... for FreeBSD and Mac OS X
+bsd_unixtime_touch() {
+	local FORMATTED_TIMESTAMP="$(date -j -r "${FILE_MODIFIED_TIME}" +'%Y%m%d%H%M.%S')"
+	touch -t "$FORMATTED_TIMESTAMP" "$@"
+}
+bsd_getmtime() {
+	stat -f %m -- "$1"
+}
+
 ################################################################################
 ############################## MAIN SCRIPT LOGIC ###############################
 ################################################################################
@@ -276,16 +218,18 @@ done
 
 # Obtain the Operating System
 case "${OS:-$(uname)}" in
-	'Linux') ;;
-	'MINGW64'*)
-		updateFileTimeStamp() { updateFileTimeStampMINGW64 "$@"; }
+	('Linux'|'MINGW64'*)
+		unixtime_touch() { linux_unixtime_touch "$@"; }
+		getmtime() { linux_getmtime "$@"; }
 	;;
-	'Darwin'|'FreeBSD')
-		updateFileTimeStamp() { updateFileTimeStampBSD "$@"; }
+	('Darwin'|'FreeBSD')
+		unixtime_touch() { bsd_unixtime_touch "$@"; }
+		getmtime() { bsd_getmtime "$@"; }
 	;;
-	*)
+	(*)
 		echo >&2 "Unknown Operating System to perform timestamp update"
 		exit 1
+	;;
 esac
 
 if [ $# -eq 0 ] && [ -z "$fromrecent" ]; then
