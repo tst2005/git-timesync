@@ -183,7 +183,7 @@ updateFileTimeStampBSD() {
 	# for displaying the date in readable format
 	#local FORMATTED_TIMESTAMP="$(date --date="${FILE_MODIFIED_TIME}" +'%d-%m-%Y %H:%M:%S %z')"
 #@	local FORMATTED_TIMESTAMP="@${FILE_MODIFIED_TIME}"
-	local FORMATTED_TIMESTAMP="$(date -j -f '%Y-%m-%d %H:%M:%S %z' "${FILE_MODIFIED_TIME}" +'%Y%m%d%H%M.%S')"
+	local FORMATTED_TIMESTAMP="$(date -j -r "${FILE_MODIFIED_TIME}" +'%Y%m%d%H%M.%S')"
 
 	# Modify the last modified timestamp
 	#echo "[$(date -d "$FORMATTED_TIMESTAMP")]: $1"
