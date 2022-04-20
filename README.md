@@ -53,4 +53,4 @@ git timesync --help
 
 ## License
 
-I usually release my code under the *MIT license*, but for this project I will follow the original author's one.
+I usually release my code under the _MIT license_, but for this project I will follow the original author's one.
