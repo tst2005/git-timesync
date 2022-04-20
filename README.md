@@ -6,11 +6,11 @@ When you `git clone` a repository, the lastmod timestamps of the created files a
 
 The easiest way to install (or update) this script on your computer is to download and place it in a directory in your `$PATH` and `chmod +x` it.
 
-Suppose that we want to place it in the `$HOME/bin` folder; to do so, you can just execute the following Bash commands:
+Suppose that we want to place it in the `~/.local/bin` folder; to do so, you can just execute the following Bash commands:
 
 ```bash
-curl -o "$HOME/bin/git-timesync" https://raw.githubusercontent.com/tst2005/git-timesync/master/git-timesync
-chmod +x "$HOME/bin/git-timesync"
+curl -o "$HOME/.local/bin/git-timesync" https://raw.githubusercontent.com/tst2005/git-timesync/master/git-timesync
+chmod +x "$HOME/.local/bin/git-timesync"
 ```
 
 ## Usage
