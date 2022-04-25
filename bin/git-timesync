@@ -217,7 +217,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Obtain the Operating System
-case "${OS:-$(uname)}" in
+case "${GIT_TIMESYNC_FORCE_UNAME:-$(uname)}" in
 	('Linux'|'MINGW64'*)
 		unixtime_touch() { linux_unixtime_touch "$@"; }
 		getmtime() { linux_getmtime "$@"; }
