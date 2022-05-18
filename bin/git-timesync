@@ -1,4 +1,25 @@
 #!/bin/sh
+# shellcheck disable=SC2004,SC3043,SC2155,SC2039
+
+#### About shellcheck
+# I disable:
+# - SC2004 (style): $/${} is unnecessary on arithmetic variables.
+# Because: I prefere `$( $x - $y ))` than `$(( x - y ))`.
+
+# I disable:
+# - SC2039: In POSIX sh, 'local' is undefined.
+# - SC3043: In POSIX sh, 'local' is undefined.
+# Because:
+#   local is too usefull, all modern shell support it.
+#   If you really want to run git-timesync on a strict POSIX shell,
+#   then remove all local prefixes : 's/local //g'.
+#
+# I disable :
+# - SC2155 (warning): Declare and assign separately to avoid masking return values.
+# Because:
+#   It not relevant : the return code is not used.
+#   I prefer `local foo="$(bar)"` than `local foo;foo="$(bar)"`.
+####
 
 set -e
 
@@ -65,9 +86,11 @@ getFileLastRevision() {
 #}
 
 getFileMTimeByPath() {
+	# shellcheck disable=SC2155
 	git rev-list --pretty=format:'date %at' --date-order -n 1 HEAD -- "$1" |
 	(
 		local IFS=" ";
+		# shellcheck disable=SC2034
 		while read -r key value _misc; do
 			[ "$key" != "date" ] || echo "$value";
 		done
@@ -76,6 +99,8 @@ getFileMTimeByPath() {
 
 # Extract the actual last modified timestamp of the file and Update the timestamp
 updateFileTimeStamp() {
+	# shellcheck disable=SC2155
+
 	# if target does not exists and it's is not a [dead]link, raise an error
 	if [ ! -e "$1" ] && [ ! -h "$1" ]; then
 		if [ -n "$(git ls-files -t -d -- "$1")" ]; then
@@ -165,10 +190,11 @@ updateFileTimeStampInCwd() {
 timesyncThisFile() {
 	if [ -d "$1" ] && [ ! -h "$1" ]; then # is a real directory (not a symlink to a directory)
 		echo "now inside $1"
+		# shellcheck disable=SC2015
 		( cd -- "$1" && updateFileTimeStampInCwd || true; )
 	else
 		if $need_check_bare; then
-			is_not_base_repo || continue
+			is_not_base_repo || return 1
 			need_check_bare=false
 		fi
 		updateFileTimeStamp "$1"
@@ -177,6 +203,7 @@ timesyncThisFile() {
 
 # ... for Linux ... and MINGW64 (used by Windows GIT Bash)
 linux_unixtime_touch() {
+	# shellcheck disable=SC2155
 	local FORMATTED_TIMESTAMP="@${FILE_MODIFIED_TIME}"
 	touch -d "$FORMATTED_TIMESTAMP" "$@"
 }
@@ -186,6 +213,7 @@ linux_getmtime() {
 
 # ... for FreeBSD and Mac OS X
 bsd_unixtime_touch() {
+	# shellcheck disable=SC2155
 	local FORMATTED_TIMESTAMP="$(date -j -r "${FILE_MODIFIED_TIME}" +'%Y%m%d%H%M.%S')"
 	touch -t "$FORMATTED_TIMESTAMP" "$@"
 }
